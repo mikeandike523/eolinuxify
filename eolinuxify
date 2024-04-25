@@ -1,0 +1,5 @@
+#!/bin/bash
+
+dn="$(dirname "$(realpath "$0")")"
+
+"$dn/__python" "$dn/eolinuxify.py" "$@"

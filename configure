@@ -1,0 +1,18 @@
+#!/bin/bash
+
+dn="$(dirname "$(realpath "$0")")"
+
+cd "$dn"
+
+set -xe
+
+sudo chmod +x __python
+sudo chmod +x eolinuxify
+
+python3 -m virtualenv pyenv
+./__python -m pip install -r requirements.txt
+
+mkdir -p "$HOME/.local/bin"
+
+rm -f "$HOME/.local/bin/eolinuxify"
+ln -s "$dn/eolinuxify" "$HOME/.local/bin/eolinuxify"
