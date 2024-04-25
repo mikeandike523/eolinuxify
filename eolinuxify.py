@@ -93,9 +93,13 @@ def fix_file(root, relpath):
     contents = contents.decode("utf-8").replace("\r\n", "\n").encode("utf-8")
     with open(os.path.join(root, relpath), "wb") as f:
         f.write(contents)
-    
 
+@click.command()
 def main():
+    """
+    Normalizes the line endings of all the source code files in the current directory
+    Source files are determined using the .gitignore files in the working tree
+    """
     CWD = os.getcwd()
     included_files = get_included_files()
     found_crlf = [file for file in included_files if has_any_crlf(CWD,file)]
