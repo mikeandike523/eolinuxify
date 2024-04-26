@@ -3,3 +3,4 @@
 dn="$(dirname "$(realpath "$0")")"
 source "$dn/pyenv/bin/activate"
 python3 "$@"
+deactivate
