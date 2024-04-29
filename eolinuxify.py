@@ -102,7 +102,13 @@ def main():
     """
     CWD = os.getcwd()
     included_files = get_included_files()
-    found_crlf = [file for file in included_files if has_any_crlf(CWD,file)]
+    found_crlf = []
+    for file in included_files:
+        try:
+            if has_any_crlf(CWD,file):
+                found_crlf.append(file)
+        except Exception as e:
+            print(str(e))
 
     print(f"Found {len(found_crlf)} files with CRLF line endings:")
     for file in found_crlf:
@@ -111,9 +117,12 @@ def main():
         print("Aborting")
         return
     for file in found_crlf:
-        print(f"Normalizing eol in file \"{file}\" to LF...",end="")
-        fix_file(CWD, file)
-        print(" done")
+        try:
+            print(f"Normalizing eol in file \"{file}\" to LF...",end="")
+            fix_file(CWD, file)
+            print(" done")
+        except Exception as e:
+            print(e)
     os.chdir(CWD)
 
 if __name__ == "__main__":
