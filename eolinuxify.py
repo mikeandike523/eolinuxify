@@ -156,7 +156,6 @@ def main():
     included_files = get_included_files()
     config = get_config()
     exclude = config.get("exclude", [])
-    print(exclude)
     included_files = [
         file for file in included_files if not any(
             is_matched_by_glob(CWD, file, pattern) for pattern in exclude
