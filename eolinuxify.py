@@ -1,9 +1,12 @@
 import os
 import tempfile
+import json
+import glob
 
 from gitignore_parser import parse_gitignore
 import click
 import termcolor
+
 
 def repair_gitignore_contents(contents):
     """
@@ -30,26 +33,35 @@ def repair_gitignore_contents(contents):
     lines = [line.strip() for line in lines]
     lines = [line for line in lines if not line == ""]
     lines = [line for line in lines if not line.startswith("#")]
-    lines = [(line[:-3] if line.endswith("/**") or line.endswith("\\**") else line) for line in lines]
-    lines = [(line[:-2] if line.endswith("/*") or line.endswith("\\*") else line) for line in lines]
+    lines = [
+        (line[:-3] if line.endswith("/**") or line.endswith("\\**") else line)
+        for line in lines
+    ]
+    lines = [
+        (line[:-2] if line.endswith("/*") or line.endswith("\\*") else line)
+        for line in lines
+    ]
     return "\n".join(lines)
 
 
-def chain_is_ignored(root,last_dir,previous,current):
-    rp = os.path.relpath(last_dir,root) if os.path.isabs(last_dir) else last_dir
+def chain_is_ignored(root, last_dir, previous, current):
+    rp = os.path.relpath(last_dir, root) if os.path.isabs(last_dir) else last_dir
     if rp == ".":
         rp = ""
+
     def f(x):
         if rp == "":
             return current(x)
-        return previous(os.path.join(rp,x)) or current(x)
+        return previous(os.path.join(rp, x)) or current(x)
+
     return f
 
 
 def get_included_files():
     root = os.getcwd()
-    result=[]
-    def recursion(chained=lambda x: x==".git"):
+    result = []
+
+    def recursion(chained=lambda x: x == ".git"):
         last = os.getcwd()
         if ".gitignore" in os.listdir():
             with open(".gitignore") as f:
@@ -59,11 +71,21 @@ def get_included_files():
                 f.write(contents.encode("utf-8"))
                 f.flush()
                 ignorer = parse_gitignore(f.name)
-            is_ignored = chain_is_ignored(root, os.getcwd(),chained,lambda x: os.path.basename(x)==".git" or ignorer(
-                os.path.join(os.path.join(os.path.dirname(f.name)),os.path.relpath(x,root))
-            ))
+            is_ignored = chain_is_ignored(
+                root,
+                os.getcwd(),
+                chained,
+                lambda x: os.path.basename(x) == ".git"
+                or ignorer(
+                    os.path.join(
+                        os.path.join(os.path.dirname(f.name)), os.path.relpath(x, root)
+                    )
+                ),
+            )
         else:
-            is_ignored = chain_is_ignored(root, os.getcwd(),chained,lambda x: os.path.basename(x)==".git")
+            is_ignored = chain_is_ignored(
+                root, os.getcwd(), chained, lambda x: os.path.basename(x) == ".git"
+            )
         files = list(os.listdir(os.getcwd()))
         for file in files:
             fullpath = os.path.join(os.getcwd(), file)
@@ -74,25 +96,55 @@ def get_included_files():
                 recursion(is_ignored)
                 os.chdir(last)
             else:
-                result.append(os.path.relpath(fullpath,root))
+                result.append(os.path.relpath(fullpath, root))
+
     recursion()
     os.chdir(root)
     return result
 
+
 def has_any_crlf(root, relpath):
-    with open(os.path.join(root, relpath),"rb") as f:
+    with open(os.path.join(root, relpath), "rb") as f:
         contents = f.read()
     if b"\r\n" in contents:
         return True
     return False
-                 
+
 
 def fix_file(root, relpath):
-    with open(os.path.join(root, relpath),"rb") as f:
+    with open(os.path.join(root, relpath), "rb") as f:
         contents = f.read()
     contents = contents.decode("utf-8").replace("\r\n", "\n").encode("utf-8")
     with open(os.path.join(root, relpath), "wb") as f:
         f.write(contents)
+
+
+def get_config():
+    config_path = os.path.join(os.path.getcwd(), "eolinuxify.json")
+    config = {"exclude": []}
+    if os.path.exists(config_path):
+        with open(config_path) as f:
+            config = json.load(f)
+    return config
+
+
+def is_matched_by_glob(root, relpath, relglob_pattern):
+    """
+    Check if any files match a glob pattern within a directory relative to a root directory.
+
+    Args:
+        root (str): Root directory.
+        relpath (str): Relative path from the root directory.
+        relglob_pattern (str): Glob pattern to match files.
+
+    Returns:
+        bool: True if files are matched by the glob pattern, False otherwise.
+    """
+    abs_path = os.path.join(root, relpath)
+    glob_pattern = os.path.join(abs_path, relglob_pattern)
+    matching_files = glob.glob(glob_pattern)
+    return matching_files is not None and len(matching_files) > 0
+
 
 @click.command()
 def main():
@@ -102,10 +154,17 @@ def main():
     """
     CWD = os.getcwd()
     included_files = get_included_files()
+    config = get_config()
+    exclude = config["exclude"]
+    included_files = [
+        file for file in included_files if not any(
+            is_matched_by_glob(CWD, file, pattern) for pattern in exclude
+        )
+    ]
     found_crlf = []
     for file in included_files:
         try:
-            if has_any_crlf(CWD,file):
+            if has_any_crlf(CWD, file):
                 found_crlf.append(file)
         except Exception as e:
             print(str(e))
@@ -118,12 +177,13 @@ def main():
         return
     for file in found_crlf:
         try:
-            print(f"Normalizing eol in file \"{file}\" to LF...",end="")
+            print(f'Normalizing eol in file "{file}" to LF...', end="")
             fix_file(CWD, file)
             print(" done")
         except Exception as e:
             print(e)
     os.chdir(CWD)
+
 
 if __name__ == "__main__":
     main()
