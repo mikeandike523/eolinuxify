@@ -120,7 +120,7 @@ def fix_file(root, relpath):
 
 
 def get_config():
-    config_path = os.path.join(os.path.getcwd(), "eolinuxify.json")
+    config_path = os.path.join(os.getcwd(), "eolinuxify.json")
     config = {"exclude": []}
     if os.path.exists(config_path):
         with open(config_path) as f:
@@ -155,7 +155,7 @@ def main():
     CWD = os.getcwd()
     included_files = get_included_files()
     config = get_config()
-    exclude = config["exclude"]
+    exclude = config.get("exclude", [])
     included_files = [
         file for file in included_files if not any(
             is_matched_by_glob(CWD, file, pattern) for pattern in exclude
