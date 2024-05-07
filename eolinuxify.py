@@ -147,7 +147,8 @@ def is_matched_by_glob(root, relpath, relglob_pattern):
 
 
 @click.command()
-def main():
+@click.option("-y","--yes",is_flag=True,required=False,default=False)
+def main(yes):
     """
     Normalizes the line endings of all the source code files in the current directory
     Source files are determined using the .gitignore files in the working tree
@@ -168,11 +169,14 @@ def main():
                 found_crlf.append(file)
         except Exception as e:
             print(str(e))
+    if len(found_crlf) == 0:
+        print("All source files have proper line endings (LF), no files to fix")
+        exit(0)
 
     print(f"Found {len(found_crlf)} files with CRLF line endings:")
     for file in found_crlf:
         print(f"  {file}")
-    if not click.confirm("Do you want to fix these files?"):
+    if (not yes) and (not click.confirm("Do you want to fix these files?")):
         print("Aborting")
         return
     for file in found_crlf:
