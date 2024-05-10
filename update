@@ -6,12 +6,6 @@ cd "$dn"
 
 set -e
 
-sudo chmod +x __python
-sudo chmod +x eolinuxify
-sudo chmod +x update
-
-python3 -m virtualenv pyenv
-
 ./__python -m pip install -r requirements.txt
 
-set+e
+set +e
