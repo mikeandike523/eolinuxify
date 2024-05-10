@@ -14,4 +14,4 @@ python3 -m virtualenv pyenv
 
 ./__python -m pip install -r requirements.txt
 
-set+e
+set +e
