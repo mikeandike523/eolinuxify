@@ -8,7 +8,6 @@ set -e
 
 sudo chmod +x __python
 sudo chmod +x eolinuxify
-sudo chmod +x update
 
 python3 -m virtualenv pyenv
 
