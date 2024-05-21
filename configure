@@ -9,7 +9,7 @@ set -e
 sudo chmod +x __python
 sudo chmod +x eolinuxify
 
-python3 -m virtualenv pyenv
+python3 -m venv pyenv
 
 ./__python -m pip install -r requirements.txt
 
