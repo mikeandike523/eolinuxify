@@ -6,8 +6,8 @@ cd "$dn"
 
 set -e
 
-sudo chmod +x __python
-sudo chmod +x eolinuxify
+chmod +x __python
+chmod +x eolinuxify
 
 python3 -m venv pyenv
 

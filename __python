@@ -1,6 +1,17 @@
 #!/bin/bash
 
-dn="$(dirname "$(realpath "$0")")"
-source "$dn/pyenv/bin/activate"
-python3 "$@"
+dn="$(cd "$(dirname "$0")" && pwd)"
+
+if [ -f "$dn/pyenv/Scripts/activate" ]; then
+    # Windows-style virtualenv
+    source "$dn/pyenv/Scripts/activate"
+elif [ -f "$dn/pyenv/bin/activate" ]; then
+    # Unix-style virtualenv
+    source "$dn/pyenv/bin/activate"
+else
+    echo "Error: could not find virtual environment activate script" >&2
+    exit 1
+fi
+
+python "$@"
 deactivate
