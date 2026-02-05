@@ -9,7 +9,7 @@ set -e
 chmod +x __python
 chmod +x eolinuxify
 
-python3 -m venv pyenv
+python3 -m venv .venv
 
 ./__python -m pip install -r requirements.txt
 
